@@ -1,31 +1,16 @@
-CC = gcc
-DEBUG = -g
-DEFINES =
 
-CFLAGS = $(DEBUG) -Wall -Wshadow -Wunreachable-code -Wredundant-decls \
-        -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes \
-        -Wdeclaration-after-statement $(DEFINES)
-PROGS = primesMT
+PROG = primesMT
 
+CC = gcc -g -Wall -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement -Wno-return-local-addr -Wuninitialized -pthread -Werror -Wunsafe-loop-optimizations
 
-all: $(PROGS)
-
-
-primesMT: primesMT.o
-	$(CC) $(CFLAGS) -o $@ $^
-	chmod a+rx,g-w $@
+ 
+all: $(PROG)
+ 
+$(PROG): primesMT.o 
+	$(CC) -o $@ $^
 
 primesMT.o: primesMT.c
-	$(CC) $(CFLAGS) -c $<
+	$(CC) -c $< 
 
-
-# clean up the compiled files and editor chaff
-clean cls:
-	rm -f $(PROGS) *.o *~ \#*
-
-ci:
-	ci -m"auto-checkin" -l *.[ch] ?akefile
-
-git:
-	git add .
-	git commit -m "commit so you dont cry later"
+clean:
+	rm -f $(PROG) $(PROG2) *.o *~ \#*

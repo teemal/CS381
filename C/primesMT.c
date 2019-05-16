@@ -1,138 +1,249 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <pthread.h>
+/*
+ * Michael Winberry
+ * 
+ * Sources:
+ * http://www.mathcs.emory.edu/~cheung/Courses/255/Syllabus/1-C-intro/bit-array.html
+ * https://www.geeksforgeeks.org/sieve-of-eratosthenes/
+*/
+
 #include <time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <libgen.h>
+#include <pthread.h>
+#include <sys/time.h>
+#include <math.h>
 
+typedef struct BitBlock_s 
+{
+    __uint128_t bits;
+    pthread_mutex_t mutex;
+} BitBlock_t;
+
+#define COMMAND_ARGS "hvt:u:"
 #define DEFAULT_THREAD_COUNT 1
-#define DEFAULT_UBOUND 10240
+#define DEFAULT_UPPER_BOUND 10240
+#define BITS_SIZE (long) sizeof(__uint128_t)
 
-long numThreads = DEFAULT_THREAD_COUNT;
-long uppperBound = DEFAULT_UBOUND;
+int even_up = 0;
+int verbose = 0;
+int array_size = 0;
+int upper_bound = DEFAULT_UPPER_BOUND;
+long num_threads = DEFAULT_THREAD_COUNT;
 
-typedef struct BitBlock_s {
-	uint32_t bits;
-	pthread_mutex_t mutex;
-}BitBlock_t;
+BitBlock_t **bit_blocks;
 
-BitBlock_t *bitBlock;
+int get_bit(int num);
+void set_bit(int num);
+void print_help(void);
+void free_blocks(void);
+void clear_bit(int num);
+void print_primes(void);
+void destroy_mutexes(void);
+void initialize_blocks(void);
+void *sieve_of_eratosthenes(void *arg);
+void join_threads(int thread_count, pthread_t *threads);
+void create_threads(int thread_count, pthread_t *threads);
 
-void helper(void);
-void *sieve(void *arg);
-void setBit(BitBlock_t A[], long k);
-int testBit(BitBlock_t A[], long k);
-void bitFalse(BitBlock_t A[], long k);
-void printStuff(BitBlock_t A[], long k);
+int main(int argc, char *argv[])
+{
+    pthread_t *threads = NULL;
 
-int main(int argc, char *argv[]) {
-	pthread_t *wthreads = NULL;
-        long tid = 0;
-        uint32_t i;
-	long start = 3;
+    {
+        int c;
 
-	{
-		int c;
-		while((c = getopt(argc, argv, "t:u:hv")) != -1) {
-			switch(c) {
-				case 't':
-					numThreads = atoi(optarg);
-					break;
-				case 'u':
-					uppperBound = atoi(optarg);
-					break;
-				case 'h':
-					helper();
-					break;
-				case 'v':
-					break;
-				default:
-					//oops
-					break;
-			}
-		}
-	}
+        while((c = getopt(argc, argv, COMMAND_ARGS)) != -1)
+        {
+            switch(c)
+            {
+                case 'v': 
+                    verbose = 1;
+                    break;
+                case 'h':
+                    print_help();
+                    exit(EXIT_SUCCESS);
+                    break;
+                case 'u':
+                    upper_bound = atoi(optarg);
+                    break;
+                case 't':
+                    num_threads = atoi(optarg);
+                    break;
+                case '?':
+                    fprintf(stderr, "Invalid argument: %s\n", argv[c]);
+                    exit(EXIT_FAILURE);
+                    break;
+                default:
+                    print_help();
+                    exit(EXIT_SUCCESS);
+                    break;
+            }
+        }
+    }
 
-	bitBlock = malloc(((uppperBound/32) + 1) * sizeof(BitBlock_t));
-	wthreads = calloc(numThreads, sizeof(pthread_t));
+    array_size = (upper_bound/BITS_SIZE);
+    threads = calloc(num_threads, sizeof(pthread_t));
+    bit_blocks = malloc((array_size + 1)  * sizeof(BitBlock_t *));
+    even_up = num_threads;
+    if (even_up % 2 == 0)
+        even_up--;
 
-	for(i = 0; i < (1+(uppperBound/32)); i++) {
-		pthread_mutex_init(&bitBlock[i].mutex, NULL);
-	}
-
-	for(tid = 0; tid < numThreads; tid++) {
-		pthread_create(&wthreads[tid], NULL, sieve, (void*) start);
-		start += 2;
-	}
-
-	for(tid = 0; tid < numThreads; tid++) {
-		pthread_join(wthreads[tid], NULL);
-	}
-
-	for(i = 0; i < (1+(uppperBound/32)); i++) {
-		pthread_mutex_destroy(&bitBlock[i].mutex);
-	}
-
-	printStuff(bitBlock, uppperBound);
-
-	free(bitBlock);
-	free(wthreads);
-	pthread_exit(EXIT_SUCCESS);
-	//return 0;
-
+    initialize_blocks();
+    create_threads(num_threads, threads);
+    join_threads(num_threads, threads);
+    
+    destroy_mutexes();
+    print_primes();
+    free_blocks();
+    
+    free(threads);
+    if(verbose >= 1)
+    {
+        fprintf(stderr, "Verbose: Freed %ld threads\n", num_threads);
+        fprintf(stderr, "Exiting Successfully\n");
+    }
+    pthread_exit(EXIT_SUCCESS);
 }
 
-void setBit(BitBlock_t A[], long k) {
-	int i = k/32;
-	int pos = k%32;
-	unsigned int flag = 1;
-	flag = flag << pos;
-	A[i].bits = A[i].bits | flag;
+
+void *sieve_of_eratosthenes(void *arg)
+{
+    int i;
+    long tid = (long) arg;
+    int p = 3 + (tid * 2);
+    for(; p*p <= upper_bound; p+=even_up)
+    {
+        if(get_bit(p) == 0)
+        {
+            for(i = p*p; i < upper_bound; i+=p)
+            {
+                set_bit(i);
+            }
+        }
+    }
+    pthread_exit(EXIT_SUCCESS);
+}
+
+void set_bit(int prime)
+{
+    int index = prime/BITS_SIZE;
+    pthread_mutex_lock(&bit_blocks[index]->mutex);
+    bit_blocks[index]->bits |= 1 << (prime%BITS_SIZE);
+    pthread_mutex_unlock(&bit_blocks[index]->mutex);
+}
+
+void clear_bit(int number)
+{
+    int pos = number%BITS_SIZE;
+    int index = number/BITS_SIZE;
+    unsigned int flag = 1;
+    flag = flag << pos;
+    flag = -flag;
+    pthread_mutex_lock(&bit_blocks[index]->mutex);
+    bit_blocks[index]->bits = bit_blocks[index]->bits & flag;
+    pthread_mutex_unlock(&bit_blocks[index]->mutex);
+}
+
+int get_bit(int number)
+{
+    int test = 0;
+    int pos = number%BITS_SIZE;
+    int index = number/BITS_SIZE;
+    unsigned int flag = 1;
+
+    flag = flag << pos;
+    if( bit_blocks[index]->bits & flag )
+        test = 1;
+    return test;
 }
 
 
-int testBit(BitBlock_t A[], long k) {
-	int i = k/32;
-	int pos = k%32;
-	unsigned int flag = 1;
-	flag = flag << pos;
-	if(A[i].bits & flag) {
-		return 1;
-	}else {
-		return 0;
-	}
+void print_help(void)
+{
+    printf("Args: %s\n", COMMAND_ARGS);
+    printf("v: enables verbose mode\n");
+    printf("u: used to set upper bound defaults to 10240\n");
+    printf("t: sets thread count, defaults to 1\n");
 }
 
-void *sieve(void *arg) {
-	long start = (long) arg;
-	int i, j;
-
-	for (i = start; i <= uppperBound; i += numThreads) {
-		if(!testBit(bitBlock, i)) {
-			for(j = i+i; j <= uppperBound; j+=i) {
-				pthread_mutex_lock(&bitBlock[j/32].mutex);
-				setBit(bitBlock, j);
-				pthread_mutex_unlock(&bitBlock[j/32].mutex);
-			}
-		}
-	}
-
-	pthread_exit(EXIT_SUCCESS);
-
+void join_threads(int thread_count, pthread_t *threads)
+{
+    long thread_id;
+    for(thread_id = 0; thread_id < thread_count; thread_id++)
+    {
+        pthread_join(threads[thread_id], NULL);
+    }
+    if(verbose >= 1)
+        fprintf(stderr, "Verbose: Joined %d threads\n", thread_count);
 }
 
-void printStuff(BitBlock_t A[], long k) {
-	int i;
-	printf("2\n");
-	for(i = 3; i < k; i += 2) {
-		if(!testBit(A, i)) {
-			printf("%d\n", i);
-		}
-	}
+void create_threads(int thread_count, pthread_t *threads)
+{
+    long thread_id;
+    for(thread_id = 0; thread_id < thread_count; thread_id++)
+    {
+        pthread_create(&threads[thread_id], NULL, sieve_of_eratosthenes, (void *) thread_id);
+    }
+    
+    if(verbose >= 1)
+        fprintf(stderr, "Verbose: Created %d threads\n", thread_count);
 }
 
-void helper(void) {
-	printf("-t : to add threads\n");
-	printf("-u : to add an upper bound\n");
-	printf("If no flags where added then the defualt thread is 1 and upper bound is 10240\n");
+void initialize_blocks(void)
+{
+    int i;
+    for(i = 0; i <= array_size; i++) 
+    {
+        bit_blocks[i] = malloc(sizeof(BitBlock_t));
+        bit_blocks[i]->bits = 0;
+        pthread_mutex_init(&bit_blocks[i]->mutex, NULL);
+    }
+    if(verbose >= 1)
+        fprintf(stderr, "Verbose: Initialized %d BitBlock_t's\n", i);
+}
+
+void free_blocks(void)
+{
+    int i;
+    for(i = 0; i <= array_size; i++)
+    {
+        free(bit_blocks[i]);
+    }
+    free(bit_blocks);
+    if(verbose >= 1)
+    {
+        fprintf(stderr, "Verbose: Freed %d BitBlock_t's\n", i);
+        fprintf(stderr, "Verbose: Freed array of BitBlock_t\n");
+    }
+}
+
+void destroy_mutexes(void)
+{
+    int i;
+    for(i = 0; i <= array_size; i++)
+    {
+        pthread_mutex_destroy(&bit_blocks[i]->mutex);
+    } 
+    if(verbose >= 1)
+        fprintf(stderr, "Verbose: Destroyed %d Mutexes\n", i);
+}
+
+void print_primes(void)
+{
+    int i;
+    int prime_count = 0;
+    fprintf(stdout, "2\n");
+    for (i = 3; i < upper_bound; i+=2) 
+    {
+        if(get_bit(i) == 0)
+        {
+            fprintf(stdout, "%d\n", i);
+            prime_count++;
+        }
+    }
+    if(verbose >= 1)
+        fprintf(stderr, "Verbose: Printed %d primes\n", prime_count);
 }

@@ -33,4 +33,4 @@ fun sieve s =
 
 fun nats n = Cons(n , fn()=> nats(n+1))
 val primes = sieve(nats 2);
-takeN(primes, 312);
+takeN(primes, 664579);

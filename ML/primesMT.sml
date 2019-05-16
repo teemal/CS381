@@ -1,20 +1,10 @@
+ 
+fun enum (n, m) = if n > m then [] else n :: enum (n + 1, m)
+fun sieve [] = []
+    | sieve (n::ns) = n :: sieve (List.filter (fn m => m mod n > 0) ns)
+fun primes n = sieve( enum( 2, n) );
 
-fun test_bit ( bit_block, n ) =
-    let
-        val i = n div 32
-        val pos = n mod 32
-        val new_bit = BitArray.array(1, true)
-        val flag = BitArray.lshift(new_bit, pos)
-    in
-        if BitArray.eqBits( bit_block, flag) 
-            then true
-        else false
-    end;
+fun printList xs = print((String.concatWith "\n" (map Int.toString xs)) ^ "\n");
 
-fun set_primes( until ) = 
-    let 
-        val bit_block = BitArray.array( until )
-        fun check_Set( bit_block, n ) = 
-            if test_bit( bit_block, n ) 
-            then true
-            else false
+val myPrimes = primes( 1000000 );
+printList( myPrimes );

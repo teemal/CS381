@@ -90,6 +90,7 @@ void setBit(BitBlock_t A[], long k) {
 	A[i].bits = A[i].bits | flag;
 }
 
+
 int testBit(BitBlock_t A[], long k) {
 	int i = k/32;
 	int pos = k%32;

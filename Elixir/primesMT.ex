@@ -6,5 +6,7 @@ defmodule Sieve do
   def call(upper_bound), do: IO.puts(["list is \n", Enum.join(Sieve.primes_to(upper_bound), " \n")])
 end
 
-Sieve.call(15000000)
+upper_bound = IO.gets("Enter upper bound: \n") |> String.trim_trailing
+upper_bound = String.to_integer(upper_bound)
+Sieve.call(upper_bound)
 

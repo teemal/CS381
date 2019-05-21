@@ -1,0 +1,49 @@
+Before optimization
+
+Primes up to 100k ML
+real	0m0.655s
+user	0m0.635s
+sys	0m0.017s
+
+Primes up to 500k ML
+real	0m12.550s
+user	0m12.372s
+sys	0m0.046s
+
+Primes up to 1 million ML
+real	0m44.785s
+user	0m44.285s
+sys	0m0.133s
+
+Primes up to 10 million ML
+Killed after 20 min
+
+After optimization
+
+Primes up to 100k ML
+real	0m0.030s
+user	0m0.025s
+sys	0m0.004s
+
+Primes up to 500k ML
+real	0m0.152s
+user	0m0.102s
+sys	0m0.049s
+
+Primes up to 1 million ML
+real	0m0.418s
+user	0m0.296s
+sys	0m0.120s
+
+Primes up to 10 million ML
+real	0m6.747s
+user	0m5.952s
+sys	0m0.758s
+
+Primes up to 100 million ML
+real	2m36.719s
+user	2m33.608s
+sys	0m2.430s
+
+
+

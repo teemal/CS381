@@ -1,0 +1,35 @@
+Primes up to 100k 1 Thread
+real	0m0.018s
+user	0m0.012s
+sys	0m0.004s
+
+Primes up to 500K 1 Thread
+real	0m0.059s
+user	0m0.055s
+sys	0m0.004s
+
+Primes up to 1mil 1 Thread
+real	0m0.115s
+user	0m0.108s
+sys	0m0.007s
+
+Primes up to 1mil 10 Threads
+real	0m0.066s
+user	0m0.183s
+sys	0m0.000s
+
+Primes up to 10mil 10 Threads
+real	0m0.851s
+user	0m2.653s
+sys	0m0.030s
+
+Primes up to 100mil 10 Threads
+real	0m10.228s
+user	0m34.529s
+sys	0m0.216s
+
+Primes up to 1Bil 10 Threads
+real	2m1.229s
+user	7m4.098s
+sys	0m2.268s
+

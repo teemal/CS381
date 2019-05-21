@@ -11,3 +11,5 @@ echo "Primes up to 10mil 10 Threads"
 time ./primesMT -u 10000000 -t 10 > JUNK10M10T
 echo "Primes up to 100mil 10 Threads"
 time ./primesMT -u 100000000 -t 10 > JUNK100M10T
+echo "Primes up to 1Bil 10 Threads"
+time ./primesMT -u 1000000000 -t 15 > JUNK1B10T

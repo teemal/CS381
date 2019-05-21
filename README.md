@@ -1,5 +1,5 @@
 # CS381
-## This repo contains implementations of a Sieve of Eratosthenes, an algorithm to find prime numbers up to N. One in C, one in ML, and one in Elixir.
+## This repo contains implementations of a Sieve of Eratosthenes, an algorithm to find prime numbers up to N. It does this by creating a list, starting at 2, and runs through each integer and removes all composite digits. There is one implementation in C, one in ML, and one in Elixir.
 
 ### To run:
 1. Clone repo

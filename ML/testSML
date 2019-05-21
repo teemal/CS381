@@ -8,4 +8,6 @@ echo "Primes up to 1 million ML"
 time ./1milPrimes > JUNK1M
 echo "Primes up to 10 million ML" 
 time ./10milPrimes > JUNK10M
+echo "Primes up to 100 million ML" 
+time ./100milPrimes > JUNK100M
 

@@ -16,7 +16,7 @@ user	0m44.285s
 sys	0m0.133s
 
 Primes up to 10 million ML
-Killed after 20 min
+Killed after ~1hr
 
 After optimization
 
@@ -45,5 +45,10 @@ real	2m36.719s
 user	2m33.608s
 sys	0m2.430s
 
-
-
+Primes up to 1B ML
+Out of memory.  
+Unable to allocate heap 
+with 7,247,773,696 bytes.
+real	0m7.020s
+user	0m5.299s
+sys	0m1.676s

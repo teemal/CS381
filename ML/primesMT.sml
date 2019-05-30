@@ -1,7 +1,8 @@
  
 (* Modified From source: https://stackoverflow.com/questions/48247694/creating-a-list-of-prime-numbers-up-to-a-given-n-value-in-sml *)
 
-fun create_list (current_num, size) = if current_num > size then [] else current_num :: create_list (current_num + 1, size)
+ fun create_list (current_num, size) = if current_num > size then [] else current_num :: create_list (current_num + 1, size) 
+
 
 fun sqrtMax max = floor(Real.Math.sqrt(real(max)))
 
@@ -36,10 +37,10 @@ fun startPartition n =
     end;
 *)
 
-fun primes n = sieve(create_list(2, n), sqrtMax(n)); 
+fun primes n = sieve(create_list(2,n), sqrtMax(n)); 
 (*fun primes n = startPartition n *)
 
 fun printList xs = print((String.concatWith "\n" (map Int.toString xs)) ^ "\n");
 
-val myPrimes = primes( 1000000 );
+val myPrimes = primes( 1000000000 );
 printList( myPrimes );
